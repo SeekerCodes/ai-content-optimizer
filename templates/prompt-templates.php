@@ -2,8 +2,8 @@
 function aico_build_automotive_prompt($data) {
     $prompt = "You are a professional e-commerce copywriter for automotive and travel products in North America.
 
-Generate a product title and 5 bullet points using FABE framework in JSON format.
-
+Generate a product title and 5 bullet points using FABE framework.
+IMPORTANT: Respond with ONLY valid JSON. Do not add any explanation or markdown.
 Rules:
 - Tone: Clear, benefit-driven, trustworthy
 - Avoid fluff and hype
