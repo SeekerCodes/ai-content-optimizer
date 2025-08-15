@@ -1,3 +1,4 @@
+<?php
 class AICO_Settings_Page {
     public function __construct() {
         add_action('admin_menu', [$this, 'add_menu']);
