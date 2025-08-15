@@ -3,7 +3,7 @@
  * Plugin Name: AI Content Optimizer
  * Description: 使用 OpenRouter 的 AI 模型（如 gpt-oss-20b）优化产品标题与描述，适用于非 WooCommerce 电商站。
  * Version: 1.0
- * Author: Your Name
+ * Author: Seeker AI
  * License: MIT
  */
 
