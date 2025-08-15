@@ -1,3 +1,5 @@
+<?php
+// 添加 meta box
 add_action('add_meta_boxes', function () {
     $post_types = ['post', 'page']; // 可改为你的商品类型
     foreach ($post_types as $pt) {
@@ -12,6 +14,7 @@ add_action('add_meta_boxes', function () {
     }
 });
 
+// 渲染 meta box
 function aico_render_metabox($post) {
     wp_nonce_field('aico_save', 'aico_nonce');
     $brands = get_option('aico_brands', ['RoadPro', 'TrailGear', 'NomadSupply']);
@@ -56,9 +59,10 @@ function aico_render_metabox($post) {
             keywords: jQuery('[name=aico_keywords]').val(),
             features: jQuery('[name=aico_features]').val(),
             scenarios: jQuery('[name=aico_scenarios]').val(),
+            aico_nonce: '<?= wp_create_nonce("aico_save") ?>' // ✅ 添加 nonce
         };
         jQuery.post(ajaxurl, data, function(res) {
-            if (res.data) {
+            if (res.success) {
                 jQuery('#aico-new-title').text(res.data.title);
                 jQuery('#aico-new-desc').html('<ul>' + res.data.bullets.map(b => 
                     `<li><strong>${b.feature}</strong>: ${b.benefit}</li>`
@@ -66,35 +70,55 @@ function aico_render_metabox($post) {
                 jQuery('#aico-result').show();
                 window.aicoNewContent = res.data;
             } else {
-                alert('Error: ' + (res.error || 'Unknown'));
+                alert('Error: ' + (res.data || res.error || 'Unknown'));
             }
+        }).fail(function() {
+            alert('请求失败，请检查网络或 API 配置');
         });
     });
+
     jQuery('#aico-insert-btn').on('click', function() {
         if (window.aicoNewContent) {
+            // 更新标题
             jQuery('#title').val(window.aicoNewContent.title);
+            
+            // 更新内容（仅经典编辑器）
             const editor = jQuery('#content');
-            editor.val(editor.val() + '\n\n### Why You’ll Love It\n' + 
-                window.aicoNewContent.bullets.map(b => `- **${b.feature}**: ${b.benefit}`).join('\n')
-            );
-            alert('已插入内容！');
+            const newContent = '\n\n### Why You’ll Love It\n' + 
+                window.aicoNewContent.bullets.map(b => `- **${b.feature}**: ${b.benefit}`).join('\n');
+            editor.val(editor.val() + newContent);
+            
+            alert('已插入内容！注意：仅支持经典编辑器');
         }
     });
     </script>
     <?php
 }
 
+// AJAX 处理
 add_action('wp_ajax_aico_optimize', function () {
-    check_ajax_referer('aico_save', 'nonce');
+    // ✅ 1. 验证 nonce
+    check_ajax_referer('aico_save', 'aico_nonce');
+
+    // ✅ 2. 权限检查
+    if (!current_user_can('edit_post', $_POST['post_id'])) {
+        wp_send_json_error('权限不足');
+    }
+
+    // ✅ 3. 过滤输入
+    $brand = sanitize_text_field($_POST['brand'] ?? '');
+    $features = sanitize_text_field($_POST['features'] ?? '');
+    $scenarios = sanitize_text_field($_POST['scenarios'] ?? '');
 
     $data = [
-        'brand' => $_POST['brand'],
+        'brand' => $brand,
         'product' => get_the_title($_POST['post_id']),
-        'features' => explode(',', $_POST['features']),
-        'scenarios' => explode(',', $_POST['scenarios']),
+        'features' => $features ? array_map('sanitize_text_field', explode(',', $features)) : [],
+        'scenarios' => $scenarios ? array_map('sanitize_text_field', explode(',', $scenarios)) : [],
         'audience' => 'drivers and travelers in North America'
     ];
 
+    // ✅ 4. 调用 AI
     $prompt = aico_build_automotive_prompt($data);
     $messages = [
         ['role' => 'system', 'content' => 'You are a senior copywriter. Respond in JSON only.'],
@@ -102,9 +126,17 @@ add_action('wp_ajax_aico_optimize', function () {
     ];
 
     $res = AICO_OpenRouter_API::call(get_option('aico_default_model'), $messages);
+
+    // ✅ 5. 安全解析 JSON
     if (isset($res['choices'][0]['message']['content'])) {
-        $json = json_decode($res['choices'][0]['message']['content'], true);
-        wp_send_json_success($json);
+        $raw_content = $res['choices'][0]['message']['content'];
+        $json = json_decode($raw_content, true);
+        if (json_last_error() === JSON_ERROR_NONE) {
+            wp_send_json_success($json);
+        } else {
+            error_log('AI 返回非 JSON 内容: ' . $raw_content);
+            wp_send_json_error('AI 返回格式错误，请重试');
+        }
     } else {
         wp_send_json_error($res['error'] ?? 'AI 调用失败');
     }
