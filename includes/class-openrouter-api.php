@@ -1,4 +1,12 @@
 <?php
+/** --- IGNORE ---
+ * OpenRouter API Integration
+ * 
+ * This class provides a method to interact with the OpenRouter API.
+ * It handles API key retrieval, request formatting, and response parsing.
+ * 
+ * @package AICO
+ */
 class AICO_OpenRouter_API {
     public static function call($model, $messages, $json_mode = true) {
         $api_key = get_option('aico_openrouter_api_key');
