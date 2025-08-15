@@ -1,12 +1,10 @@
 <?php
 /**
  * Plugin Name: AI Content Optimizer
- * Description: 使用 OpenRouter 的 AI 模型（如 gpt-oss-20b）优化产品标题与描述，适用于非 WooCommerce 电商站。
- * Version: 1.0
- * Author: Seeker AI
- * License: MIT
+ * Description: Adds a meta box to posts and products to optimize title and description using AI.
+ * Version: 1.1
+ * Author: SeekerAI
  */
-
 defined('ABSPATH') or die('No script kiddies please!');
 
 define('AICO_PLUGIN_DIR', plugin_dir_path(__FILE__));
