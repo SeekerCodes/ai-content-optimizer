@@ -1,3 +1,4 @@
+<?php
 function aico_build_automotive_prompt($data) {
     $prompt = "You are a professional e-commerce copywriter for automotive and travel products in North America.
 

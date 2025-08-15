@@ -1,3 +1,4 @@
+<?php
 class AICO_OpenRouter_API {
     public static function call($model, $messages, $json_mode = true) {
         $api_key = get_option('aico_openrouter_api_key');
